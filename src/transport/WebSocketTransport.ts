@@ -1,16 +1,31 @@
-import NodeWebSocket from "ws";
 import { ITransport, ITransportEventMap } from "./ITransport";
 
-const WebSocket = globalThis.WebSocket || NodeWebSocket;
+// 使用 uniwebsocket 替代原生 WebSocket
+// 这里假设 uniwebsocket 已经通过某种方式可用
+// 在实际使用中，可能需要通过 import 或全局变量来获取
+declare const uni: any;
 
 export class WebSocketTransport implements ITransport {
-    ws: WebSocket | NodeWebSocket;
-    protocols?: string | string[];
+    private ws: any; // uniwebsocket 实例
+    private protocols?: string | string[];
 
     constructor(public events: ITransportEventMap) {}
 
     public send(data: Buffer | Uint8Array): void {
-        this.ws.send(data);
+        if (this.ws && this.isOpen) {
+            this.ws.send({
+                data: data,
+                success: () => {
+                    // 发送成功
+                },
+                fail: (error: any) => {
+                    console.error('WebSocket send failed:', error);
+                    if (this.events.onerror) {
+                        this.events.onerror(error);
+                    }
+                }
+            });
+        }
     }
 
     public sendUnreliable(data: ArrayBuffer | Array<number>): void {
@@ -19,31 +34,83 @@ export class WebSocketTransport implements ITransport {
 
     /**
      * @param url URL to connect to
-     * @param headers custom headers to send with the connection (only supported in Node.js. Web Browsers do not allow setting custom headers)
+     * @param options 连接选项，包括 headers 等
      */
-    public connect(url: string, headers?: any): void {
+    public connect(url: string, options: any = {}): void {
         try {
-            // Node or Bun environments (supports custom headers)
-            this.ws = new WebSocket(url, { headers, protocols: this.protocols });
+            // 使用 uni.connectSocket 创建 WebSocket 连接
+            this.ws = uni.connectSocket({
+                url: url,
+                protocols: this.protocols,
+                header: options.headers || {},
+                success: () => {
+                    console.log('WebSocket connection initiated');
+                },
+                fail: (error: any) => {
+                    console.error('WebSocket connection failed:', error);
+                    if (this.events.onerror) {
+                        this.events.onerror(error);
+                    }
+                }
+            });
+
+            // 监听 WebSocket 事件
+            this.ws.onOpen((res: any) => {
+                console.log('WebSocket connected');
+                if (this.events.onopen) {
+                    this.events.onopen(res);
+                }
+            });
+
+            this.ws.onMessage((res: any) => {
+                if (this.events.onmessage) {
+                    // 处理接收到的数据
+                    const event = {
+                        data: res.data,
+                        type: 'message'
+                    };
+                    this.events.onmessage(event);
+                }
+            });
+
+            this.ws.onClose((res: any) => {
+                console.log('WebSocket closed:', res);
+                if (this.events.onclose) {
+                    this.events.onclose(res);
+                }
+            });
+
+            this.ws.onError((error: any) => {
+                console.error('WebSocket error:', error);
+                if (this.events.onerror) {
+                    this.events.onerror(error);
+                }
+            });
 
         } catch (e) {
-            // browser environment (custom headers not supported)
-            this.ws = new WebSocket(url, this.protocols);
+            console.error('Failed to create WebSocket connection:', e);
+            if (this.events.onerror) {
+                this.events.onerror(e);
+            }
         }
-
-        this.ws.binaryType = 'arraybuffer';
-        this.ws.onopen = this.events.onopen;
-        this.ws.onmessage = this.events.onmessage;
-        this.ws.onclose = this.events.onclose;
-        this.ws.onerror = this.events.onerror;
     }
 
-    public close(code?: number, reason?: string) {
-        this.ws.close(code, reason);
+    public close(code?: number, reason?: string): void {
+        if (this.ws) {
+            this.ws.close({
+                code: code || 1000,
+                reason: reason || 'Normal closure',
+                success: () => {
+                    console.log('WebSocket closed successfully');
+                },
+                fail: (error: any) => {
+                    console.error('Failed to close WebSocket:', error);
+                }
+            });
+        }
     }
 
-    get isOpen() {
-        return this.ws.readyState === WebSocket.OPEN;
+    get isOpen(): boolean {
+        return this.ws && this.ws.readyState === 1; // 1 表示 OPEN 状态
     }
-
 }

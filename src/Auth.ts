@@ -71,7 +71,7 @@ export class Auth {
 
     public async registerWithEmailAndPassword(email: string, password: string, options?: any) {
         const data = (await this.http.post(`${this.settings.path}/register`, {
-            body: { email, password, options, },
+            data: { email, password, options, },
         })).data;
 
         this.emitChange(data);
@@ -81,7 +81,7 @@ export class Auth {
 
     public async signInWithEmailAndPassword(email: string, password: string) {
         const data = (await this.http.post(`${this.settings.path}/login`, {
-            body: { email, password, },
+            data: { email, password, },
         })).data;
 
         this.emitChange(data);
@@ -91,7 +91,7 @@ export class Auth {
 
     public async signInAnonymously(options?: any) {
         const data = (await this.http.post(`${this.settings.path}/anonymous`, {
-            body: { options, }
+            data: { options, }
         })).data;
 
         this.emitChange(data);
@@ -101,7 +101,7 @@ export class Auth {
 
     public async sendPasswordResetEmail(email: string) {
         return (await this.http.post(`${this.settings.path}/forgot-password`, {
-            body: { email, }
+            data: { email, }
         })).data;
     }
 

@@ -97,7 +97,7 @@ export class Room<State= any> {
 
         // FIXME: refactor this.
         if (options.protocol === "h3") {
-            const url = new URL(endpoint);
+            const url = new globalThis.URL(endpoint);
             connection.connect(url.origin, options);
 
         } else {

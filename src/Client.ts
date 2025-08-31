@@ -56,8 +56,8 @@ export class Client {
             // endpoint by url
             //
             const url = (settings.startsWith("/"))
-                ? new URL(settings, DEFAULT_ENDPOINT)
-                : new URL(settings);
+                ? new globalThis.URL(settings, DEFAULT_ENDPOINT)
+                : new globalThis.URL(settings);
 
             const secure = (url.protocol === "https:" || url.protocol === "wss:");
             const port = Number(url.port || (secure ? 443 : 80));
@@ -204,11 +204,11 @@ export class Client {
     ) {
         const response = (
             await this.http.post<SeatReservation>(`matchmake/${method}/${roomName}`, {
-                headers: {
+                header: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(options)
+                data: JSON.stringify(options)
             })
         ).data;
 
@@ -261,7 +261,7 @@ export class Client {
 
         const endpointURL = `${endpoint}/${room.processId}/${room.roomId}?${searchParams}`;
         return (this.urlBuilder)
-            ? this.urlBuilder(new URL(endpointURL))
+            ? this.urlBuilder(new globalThis.URL(endpointURL))
             : endpointURL;
     }
 
@@ -275,7 +275,7 @@ export class Client {
         }
 
         return (this.urlBuilder)
-            ? this.urlBuilder(new URL(endpointURL))
+            ? this.urlBuilder(new globalThis.URL(endpointURL))
             : endpointURL;
     }
 

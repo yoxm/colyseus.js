@@ -80,7 +80,9 @@ export class Client {
             if (settings.pathname === undefined) {
                 settings.pathname = "";
             }
+            
             this.settings = settings;
+            this.settings.secure = settings.secure || true;
         }
 
         // make sure pathname does not end with "/"

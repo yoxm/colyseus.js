@@ -21,7 +21,7 @@ export class MatchMakeError extends Error {
 // - React Native does not provide `window.location`
 // - Cocos Creator (Native) does not provide `window.location.hostname`
 const DEFAULT_ENDPOINT = (typeof (window) !== "undefined" &&  typeof (window?.location?.hostname) !== "undefined")
-    ? `${window.location.protocol.replace("http", "ws")}//${window.location.hostname}${(window.location.port && `:${window.location.port}`)}`
+    ? `${window.location.protocol.replace("http", "wss")}//${window.location.hostname}${(window.location.port && `:${window.location.port}`)}`
     : "ws://127.0.0.1:2567";
 
 export interface EndpointSettings {
@@ -230,7 +230,7 @@ export class Client {
         return new Room<T>(roomName, rootSchema);
     }
 
-    protected buildEndpoint(room: any, options: any = {}, protocol: string = "ws") {
+    protected buildEndpoint(room: any, options: any = {}, protocol: string = "wss") {
         let searchParams = this.settings.searchParams || "";
 
         // forward authentication token
@@ -269,8 +269,10 @@ export class Client {
 
     protected getHttpEndpoint(segments: string = '') {
         const path = segments.startsWith("/") ? segments : `/${segments}`;
+        console.log(`Yoyo:  ~ Client ~ getHttpEndpoint ~ path:`, path);
 
-        let endpointURL = `${(this.settings.secure) ? "https" : "http"}://${this.settings.hostname}${this.getEndpointPort()}${this.settings.pathname}${path}`;
+        let endpointURL = `${(this.settings.secure) ? "https" : "https"}://${this.settings.hostname}${this.getEndpointPort()}${this.settings.pathname}${path}`;
+        console.log(`Yoyo:  ~ Client ~ getHttpEndpoint ~ endpointURL:`, endpointURL);
 
         if (this.settings.searchParams) {
             endpointURL += `?${this.settings.searchParams}`;
